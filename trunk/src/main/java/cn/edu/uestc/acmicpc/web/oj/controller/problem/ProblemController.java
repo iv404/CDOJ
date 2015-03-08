@@ -40,6 +40,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
+@SuppressWarnings("deprecation")
 @Controller
 @RequestMapping("/problem")
 public class ProblemController extends BaseController {
@@ -49,7 +50,6 @@ public class ProblemController extends BaseController {
   private final PictureService pictureService;
   private final FileService fileService;
   private final Settings settings;
-  private ProblemCondition problemCondition;
 
   @Autowired
   public ProblemController(ProblemService problemService,
@@ -118,17 +118,13 @@ public class ProblemController extends BaseController {
           problemCondition.type = ProblemType.NORMAL;
         }
       }
-      System.out.println(problemCondition.keyword + " visible = " + problemCondition.isVisible + " type = " + problemCondition.type);
       Long count = problemService.count(problemCondition);
-      System.out.println(problemCondition.keyword + " visible = " + problemCondition.isVisible + " type = " + problemCondition.type);
       PageInfo pageInfo = buildPageInfo(count, problemCondition.currentPage,
           settings.RECORD_PER_PAGE, null);
-
       List<ProblemListDto> problemListDtoList = problemService
           .getProblemListDtoList(
               problemCondition, pageInfo);
       UserDto currentUser = (UserDto) session.getAttribute("currentUser");
-      System.out.println("count = " + count + " find = " + problemListDtoList.size());
       Map<Integer, ProblemSolveStatusType> problemStatus = getProblemStatus(currentUser, session);
 
       for (ProblemListDto problemListDto : problemListDtoList) {
@@ -138,7 +134,6 @@ public class ProblemController extends BaseController {
           problemListDto.setStatus(2);
         }
       }
-
       json.put("pageInfo", pageInfo);
       json.put("result", "success");
       json.put("list", problemListDtoList);
@@ -332,12 +327,12 @@ public class ProblemController extends BaseController {
     try {
       if (currentUser != null) {
         List<Integer> triedProblems = statusService.
-            findAllUserTriedProblemIds(currentUser.getUserId(), isAdmin(session));
+            findAllProblemIdsThatUserTried(currentUser.getUserId(), isAdmin(session));
         for (Integer result : triedProblems) {
           problemStatus.put(result, ProblemSolveStatusType.FAIL);
         }
         List<Integer> acceptedProblems = statusService.
-            findAllUserAcceptedProblemIds(currentUser.getUserId(), isAdmin(session));
+            findAllProblemIdsThatUserSolved(currentUser.getUserId(), isAdmin(session));
         for (Integer result : acceptedProblems) {
           problemStatus.put(result, ProblemSolveStatusType.PASS);
         }

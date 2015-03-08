@@ -1,7 +1,12 @@
 package cn.edu.uestc.acmicpc.web.oj.controller;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,10 +15,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cn.edu.uestc.acmicpc.db.condition.impl.ProblemCondition;
 import cn.edu.uestc.acmicpc.db.dto.impl.problem.ProblemDto;
+import cn.edu.uestc.acmicpc.db.dto.impl.problem.ProblemListDto;
 import cn.edu.uestc.acmicpc.db.dto.impl.user.UserDto;
 import cn.edu.uestc.acmicpc.testing.ControllerTest;
 import cn.edu.uestc.acmicpc.util.enums.AuthenticationType;
 import cn.edu.uestc.acmicpc.util.enums.ProblemType;
+import cn.edu.uestc.acmicpc.web.dto.PageInfo;
 import cn.edu.uestc.acmicpc.web.oj.controller.problem.ProblemController;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +30,15 @@ import org.testng.annotations.Test;
 
 import com.alibaba.fastjson.JSON;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Mock test for {@link ProblemController}.
  */
-public class ProblemControllerTest extends ControllerTest {
+public class ProblemControllerTest extends ControllerTest{
 
   @Autowired
   private ProblemController problemController;
@@ -47,12 +57,12 @@ public class ProblemControllerTest extends ControllerTest {
         setDescription("description test").setInput("1 2").setOutput("3").
         setSampleInput("SampleInput test").setSampleOutput("SampleOutput test").
         setHint("Hint Test").setSource("Source Test").setTimeLimit(1000).setMemoryLimit(65536)
-        .setSolved(0).setTried(0).setIsSpj(Boolean.FALSE).setIsVisible(Boolean.TRUE)
+        .setSolved(0).setTried(0).setIsSpj(false).setIsVisible(true)
         .setOutputLimit(8000).setJavaTimeLimit(3000).setJavaMemoryLimit(65536).setDataCount(1)
         .setDifficulty(1).setType(ProblemType.NORMAL).build();
 
     UserDto userDto = UserDto.builder().setType(AuthenticationType.NORMAL.ordinal()).build();
-    Boolean visibleArg[] = {Boolean.TRUE, Boolean.FALSE};
+    Boolean visibleArg[] = {true, false};
     ProblemType problemTypeArg[] = {ProblemType.NORMAL, ProblemType.INTERNAL};
     Integer userTypeArg[] = {AuthenticationType.NORMAL.ordinal(),
         AuthenticationType.INTERNAL.ordinal(), AuthenticationType.ADMIN.ordinal()};
@@ -64,17 +74,17 @@ public class ProblemControllerTest extends ControllerTest {
           userDto.setType(userTypeArg[k]);
           when(problemService.getProblemDtoByProblemId(1234))
               .thenReturn(problemDto);
-          Boolean permissionToVivit = Boolean.FALSE;
+          Boolean permissionToVivit = false;
           if(userDto.getType() == AuthenticationType.ADMIN.ordinal()) {
-            permissionToVivit = Boolean.TRUE;
+            permissionToVivit = true;
           } else {
             if(problemDto.getIsVisible()) {
               if(problemDto.getType() == ProblemType.NORMAL) {
-                permissionToVivit = Boolean.TRUE;
+                permissionToVivit = true;
               }
               if(problemDto.getType() == ProblemType.INTERNAL &&
                   userDto.getType() == AuthenticationType.INTERNAL.ordinal()) {
-                permissionToVivit = Boolean.TRUE;
+                permissionToVivit = true;
               }
             }
           }
@@ -123,54 +133,113 @@ public class ProblemControllerTest extends ControllerTest {
     UserDto userDto = UserDto.builder().setType(AuthenticationType.NORMAL.ordinal()).build();
     Integer userTypeArg[] = {AuthenticationType.NORMAL.ordinal(),
         AuthenticationType.INTERNAL.ordinal(), AuthenticationType.ADMIN.ordinal()};
+    ProblemCondition adminSearchCondition = new ProblemCondition();
+    ProblemCondition internalSearchCondition = new ProblemCondition();
+    ProblemCondition normalSearchCondition = new ProblemCondition();
+
+    internalSearchCondition.isVisible = true;
+    normalSearchCondition.isVisible = true;
+    normalSearchCondition.type = ProblemType.NORMAL;
+    when(problemService.count(any(ProblemCondition.class))).thenReturn(Long.valueOf(5));
+
+    List<ProblemListDto> adminResult = new LinkedList<>();
+    for (int i = 0; i < 5; i++) {
+      adminResult.add(ProblemListDto.builder().setIsVisible(false).setProblemId(i).build());
+    }
+    when(problemService.getProblemListDtoList(eq(adminSearchCondition), any(PageInfo.class)))
+        .thenReturn(adminResult);
+
+    List<ProblemListDto> internalResult = new LinkedList<>();
+    for (int i = 0; i < 5; i++) {
+      internalResult.add(ProblemListDto.builder().setIsVisible(true).setProblemId(i).build());
+    }
+    when(problemService.getProblemListDtoList(eq(internalSearchCondition), any(PageInfo.class)))
+        .thenReturn(internalResult);
+
+    List<ProblemListDto> normalResult = new LinkedList<>();
+    for (int i = 0; i < 5; i++) {
+      normalResult.add(ProblemListDto.builder().setIsVisible(true).setType(ProblemType.NORMAL).setProblemId(i).build());
+    }
+   when(problemService.getProblemListDtoList(eq(normalSearchCondition), any(PageInfo.class)))
+         .thenReturn(normalResult);
+
+    List<Integer> triedProblems = new ArrayList<>();
+    List<Integer> acceptedProblems = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      triedProblems.add(Integer.valueOf(i));
+      if(i <= 2) {
+        acceptedProblems.add(Integer.valueOf(i));
+      }
+    }
+    when(statusService.findAllProblemIdsThatUserTried(any(Integer.class), anyBoolean())).thenReturn(triedProblems);
+    when(statusService.findAllProblemIdsThatUserSolved(any(Integer.class), anyBoolean())).thenReturn(acceptedProblems);
+    //different types of user to search problem
     for(int i = 0; i < userTypeArg.length; i++) {
       userDto.setType(userTypeArg[i]);
       if(userDto.getType() == AuthenticationType.ADMIN.ordinal()) {
-        mockMvc.perform(post("/problem/search/")
-            .sessionAttr("currentUser", userDto)
-            .sessionAttr("keyword", "a"))
-            .andExpect(request().sessionAttribute("currentUser", userDto))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.", is("4")));
-        mockMvc.perform(post("/problem/search/").sessionAttr("currentUser", userDto)
-            .sessionAttr("keyword", ""))
-            .andExpect(request().sessionAttribute("currentUser", userDto))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.",is("4")));
-      } else if(userDto.getType() == AuthenticationType.NORMAL.ordinal()) {
-        userDto.setType(AuthenticationType.NORMAL.ordinal());
-        ProblemCondition problemCondition = new ProblemCondition();
+        userDto.setType(AuthenticationType.ADMIN.ordinal());
         mockMvc.perform(post("/problem/search/")
             .contentType(APPLICATION_JSON_UTF8)
-            .content(JSON.toJSONBytes(problemCondition))
+            .content(JSON.toJSONBytes(new ProblemCondition()))
             .sessionAttr("currentUser", userDto))
             .andExpect(request().sessionAttribute("currentUser", userDto))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.", is("4")));
-        mockMvc.perform(post("/problem/search/").sessionAttr("currentUser", userDto)
-            .sessionAttr("keyword", ""))
+            .andExpect(jsonPath("$.pageInfo.totalItems.", is(5)))
+            .andExpect(jsonPath("$.list", hasSize(5)))
+            .andExpect(jsonPath("$.list[0].problemId", is(0)))
+            .andExpect(jsonPath("$.list[1].problemId", is(1)))
+            .andExpect(jsonPath("$.list[2].problemId", is(2)))
+            .andExpect(jsonPath("$.list[3].problemId", is(3)))
+            .andExpect(jsonPath("$.list[4].problemId", is(4)))
+            .andExpect(jsonPath("$.list[0].isVisible", is(false)))
+            .andExpect(jsonPath("$.list[1].isVisible", is(false)))
+            .andExpect(jsonPath("$.list[2].isVisible", is(false)))
+            .andExpect(jsonPath("$.list[3].isVisible", is(false)))
+            .andExpect(jsonPath("$.list[4].isVisible", is(false)));
+            verify(problemService).getProblemListDtoList(eq(adminSearchCondition), any(PageInfo.class));
+      } else if(userDto.getType() == AuthenticationType.NORMAL.ordinal()) {
+        userDto.setType(AuthenticationType.NORMAL.ordinal());
+        mockMvc.perform(post("/problem/search/")
+            .contentType(APPLICATION_JSON_UTF8)
+            .content(JSON.toJSONBytes(new ProblemCondition()))
+            .sessionAttr("currentUser", userDto))
             .andExpect(request().sessionAttribute("currentUser", userDto))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.",is("1")));
+            .andExpect(jsonPath("$.pageInfo.totalItems.", is(5)))
+            .andExpect(jsonPath("$.list", hasSize(5)))
+            .andExpect(jsonPath("$.list[0].problemId", is(0)))
+            .andExpect(jsonPath("$.list[1].problemId", is(1)))
+            .andExpect(jsonPath("$.list[2].problemId", is(2)))
+            .andExpect(jsonPath("$.list[3].problemId", is(3)))
+            .andExpect(jsonPath("$.list[4].problemId", is(4)))
+            .andExpect(jsonPath("$.list[0].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[1].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[2].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[3].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[4].isVisible", is(true)));
       } else if(userDto.getType() == AuthenticationType.INTERNAL.ordinal()) {
-        mockMvc.perform(post("/problem/search/").sessionAttr("currentUser", userDto)
-            .sessionAttr("keyword", "a"))
+        userDto.setType(AuthenticationType.INTERNAL.ordinal());
+        mockMvc.perform(post("/problem/search/")
+            .contentType(APPLICATION_JSON_UTF8)
+            .content(JSON.toJSONBytes(new ProblemCondition()))
+            .sessionAttr("currentUser", userDto))
             .andExpect(request().sessionAttribute("currentUser", userDto))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.",is("4")));
-        mockMvc.perform(post("/problem/search/").sessionAttr("currentUser", userDto)
-            .sessionAttr("keyword", ""))
-            .andExpect(request().sessionAttribute("currentUser", userDto))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.result", is("success")))
-            .andExpect(jsonPath("$.pageInfo.totalItems.",is("2")));
+            .andExpect(jsonPath("$.pageInfo.totalItems.", is(5)))
+            .andExpect(jsonPath("$.list[0].problemId", is(0)))
+            .andExpect(jsonPath("$.list[1].problemId", is(1)))
+            .andExpect(jsonPath("$.list[2].problemId", is(2)))
+            .andExpect(jsonPath("$.list[3].problemId", is(3)))
+            .andExpect(jsonPath("$.list[4].problemId", is(4)))
+            .andExpect(jsonPath("$.list[0].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[1].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[2].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[3].isVisible", is(true)))
+            .andExpect(jsonPath("$.list[4].isVisible", is(true)));
       }
     }
   }
-
 }

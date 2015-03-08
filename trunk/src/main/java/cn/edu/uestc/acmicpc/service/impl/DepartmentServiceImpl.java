@@ -1,6 +1,6 @@
 package cn.edu.uestc.acmicpc.service.impl;
 
-import cn.edu.uestc.acmicpc.db.criteria.impl.DepartmentCriteria;
+import cn.edu.uestc.acmicpc.db.criteria.DepartmentCriteria;
 import cn.edu.uestc.acmicpc.db.dao.iface.DepartmentDao;
 import cn.edu.uestc.acmicpc.db.dto.field.DepartmentFields;
 import cn.edu.uestc.acmicpc.db.dto.impl.DepartmentDto;
@@ -9,6 +9,7 @@ import cn.edu.uestc.acmicpc.util.exception.AppException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,6 +22,7 @@ import javax.annotation.PostConstruct;
  * Description
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class DepartmentServiceImpl extends AbstractService implements DepartmentService {
 
   private final DepartmentDao departmentDao;
@@ -35,11 +37,13 @@ public class DepartmentServiceImpl extends AbstractService implements Department
   @PostConstruct
   public void init() throws AppException {
     departments.clear();
+    DepartmentCriteria criteria = new DepartmentCriteria();
     try {
-      DepartmentCriteria criteria = new DepartmentCriteria(DepartmentFields.ALL_FIELDS);
-      List<DepartmentDto> departmentDtoList = departmentDao.findAll(criteria.getCriteria(), null);
+      List<DepartmentDto> departmentDtoList = departmentDao.findAll(criteria, null,
+          DepartmentFields.ALL_FIELDS);
       departmentDtoList.stream().forEach(dto -> departments.put(dto.getDepartmentId(), dto));
-    } catch (NullPointerException e) {
+    } catch (NullPointerException ignored) {
+      // TODO(Yun Li): Fix it
     }
   }
 

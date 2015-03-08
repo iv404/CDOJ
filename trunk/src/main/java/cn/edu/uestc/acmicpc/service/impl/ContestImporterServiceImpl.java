@@ -49,20 +49,21 @@ public class ContestImporterServiceImpl implements ContestImporterService {
 
   private final ArrayList<String> problemDataDirectories;
 
-  private static final String[] contestBasicInfoTagNames = new String[] {
+  private static final String[] contestBasicInfoTagNames = new String[]{
       "title", "length", "type", "startTime", "description", "visible", "problems"
   };
 
-  private static final String[] problemBasicInfoTagNames = new String[] {
+  private static final String[] problemBasicInfoTagNames = new String[]{
       "title", "description", "timeLimit", "memoryLimit", "input", "output",
       "sampleInput", "sampleOutput", "source"
   };
 
-  private static final String[] problemAdditionalInfoTagNames = new String[] {
+  private static final String[] problemAdditionalInfoTagNames = new String[]{
       "javaTimeLimit", "javaMemoryLimit", "hint", "specialJudge"
   };
 
   private static final Map<String, String> problemTagsSetter;
+
   static {
     problemTagsSetter = new HashMap<>();
     problemTagsSetter.put("title", "setTitle");
@@ -142,27 +143,27 @@ public class ContestImporterServiceImpl implements ContestImporterService {
 
       try {
         switch (tagName) {
-        case "title":
-          contestDto.setTitle(innerText);
-          break;
-        case "length":
-          contestDto.setLength(Integer.parseInt(innerText) * 60);
-          break;
-        case "type":
-          contestDto.setType(getContestType(innerText));
-          break;
-        case "startTime":
-          contestDto.setTime(Timestamp.valueOf(innerText));
-          break;
-        case "description":
-          contestDto.setDescription(innerText);
-          break;
-        case "visible":
-          contestDto.setIsVisible(Boolean.parseBoolean(innerText));
-          break;
-        case "problems":
-          contestProblems = parseContestProblems(node, directory);
-          break;
+          case "title":
+            contestDto.setTitle(innerText);
+            break;
+          case "length":
+            contestDto.setLength(Integer.parseInt(innerText) * 60);
+            break;
+          case "type":
+            contestDto.setType(getContestType(innerText));
+            break;
+          case "startTime":
+            contestDto.setTime(Timestamp.valueOf(innerText));
+            break;
+          case "description":
+            contestDto.setDescription(innerText);
+            break;
+          case "visible":
+            contestDto.setIsVisible(Boolean.parseBoolean(innerText));
+            break;
+          case "problems":
+            contestProblems = parseContestProblems(node, directory);
+            break;
         }
       } catch (Exception e) {
         throw new AppException(e.getMessage());
@@ -201,17 +202,17 @@ public class ContestImporterServiceImpl implements ContestImporterService {
   private static Byte getContestType(String contestTypeString) {
     ContestType contestType;
     switch (contestTypeString) {
-    case "Private":
-      contestType = ContestType.PRIVATE;
-      break;
-    case "Invited":
-      contestType = ContestType.INVITED;
-      break;
-    case "DIY":
-      contestType = ContestType.DIY;
-      break;
-    default:
-      contestType = ContestType.PUBLIC;
+      case "Private":
+        contestType = ContestType.PRIVATE;
+        break;
+      case "Invited":
+        contestType = ContestType.INVITED;
+        break;
+      case "DIY":
+        contestType = ContestType.DIY;
+        break;
+      default:
+        contestType = ContestType.PUBLIC;
     }
     return (byte) contestType.ordinal();
   }

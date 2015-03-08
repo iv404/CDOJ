@@ -10,6 +10,7 @@ import cn.edu.uestc.acmicpc.util.exception.AppException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
  */
 @Service
 @Primary
+@Transactional(rollbackFor = Exception.class)
 public class ContestUserServiceImpl extends AbstractService implements ContestUserService {
   private final ContestUserDao contestUserDao;
 
@@ -66,12 +68,12 @@ public class ContestUserServiceImpl extends AbstractService implements ContestUs
     StringBuilder hqlBuilder = new StringBuilder();
     hqlBuilder
         .append("select contestUser.contestUserId from ContestUser contestUser, User user where")
-        // Contest id
+            // Contest id
         .append(" contestUser.contestId = ").append(contestId)
         // User should be accepted
         .append(" and contestUser.status = ").append(ContestRegistryStatusType.ACCEPTED.ordinal())
         .append(" and contestUser.userId = user.userId")
-        // User id
+            // User id
         .append(" and contestUser.userId = ").append(userId);
     List<Integer> result = (List<Integer>) contestUserDao.findAll(hqlBuilder.toString());
     return result.size() > 0;

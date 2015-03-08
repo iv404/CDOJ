@@ -14,13 +14,16 @@ import cn.edu.uestc.acmicpc.web.dto.PageInfo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
  * Description
  */
+@SuppressWarnings("deprecation")
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class MessageServiceImpl extends AbstractService implements MessageService {
 
   private final MessageDao messageDao;

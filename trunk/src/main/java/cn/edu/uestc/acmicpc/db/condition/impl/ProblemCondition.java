@@ -6,9 +6,12 @@ import cn.edu.uestc.acmicpc.util.enums.ProblemType;
 import cn.edu.uestc.acmicpc.util.exception.AppException;
 import cn.edu.uestc.acmicpc.util.helper.EnumTypeUtil;
 
+import java.util.Objects;
+
 /**
  * Problem database condition entity.
  */
+@Deprecated
 public class ProblemCondition extends BaseCondition {
 
   public ProblemCondition() {
@@ -97,5 +100,43 @@ public class ProblemCondition extends BaseCondition {
       condition.addEntry(keywordCondition);
     }
     return condition;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ProblemCondition)) {
+      return false;
+    }
+
+    ProblemCondition that = (ProblemCondition) o;
+    return Objects.equals(this.startId, that.startId)
+        && Objects.equals(this.endId, that.endId)
+        && Objects.equals(this.title, that.title)
+        && Objects.equals(this.source, that.source)
+        && Objects.equals(this.keyword, that.keyword)
+        && Objects.equals(this.isSpj, that.isSpj)
+        && Objects.equals(this.isVisible, that.isVisible)
+        && Objects.equals(this.startDifficulty, that.startDifficulty)
+        && Objects.equals(this.endDifficulty, that.endDifficulty)
+        && Objects.equals(this.isTitleEmpty, that.isTitleEmpty);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 0;
+    result = 31 * result + (startId != null ? startId.hashCode() : 0);
+    result = 31 * result + (endId != null ? endId.hashCode() : 0);
+    result = 31 * result + (title != null ? title.hashCode() : 0);
+    result = 31 * result + (source != null ? source.hashCode() : 0);
+    result = 31 * result + (keyword != null ? keyword.hashCode() : 0);
+    result = 31 * result + (isSpj != null ? isSpj.hashCode() : 0);
+    result = 31 * result + (isVisible != null ? isVisible.hashCode() : 0);
+    result = 31 * result + (startDifficulty != null ? startDifficulty.hashCode() : 0);
+    result = 31 * result + (endDifficulty != null ? endDifficulty.hashCode() : 0);
+    result = 31 * result + (isTitleEmpty != null ? isTitleEmpty.hashCode() : 0);
+    return result;
   }
 }
