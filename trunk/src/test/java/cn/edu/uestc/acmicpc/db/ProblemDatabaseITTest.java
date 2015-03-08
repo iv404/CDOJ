@@ -67,7 +67,7 @@ public class ProblemDatabaseITTest extends PersistenceITTest {
     condition.addEntry(Entry.of("title", ConditionType.STRING_EQUALS, ""));
     List<ProblemDto> problems =
         problemDao.findAll(ProblemDto.class, ProblemDto.builder(), condition);
-    Assert.assertEquals(problems.size(), 1);
+    Assert.assertEquals(problems.size(), 4);
     Assert.assertEquals(problems.get(0).getProblemId(), Integer.valueOf(5));
   }
 

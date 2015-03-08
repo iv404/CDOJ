@@ -49,6 +49,7 @@ public class ProblemController extends BaseController {
   private final PictureService pictureService;
   private final FileService fileService;
   private final Settings settings;
+  private ProblemCondition problemCondition;
 
   @Autowired
   public ProblemController(ProblemService problemService,
@@ -117,15 +118,17 @@ public class ProblemController extends BaseController {
           problemCondition.type = ProblemType.NORMAL;
         }
       }
+      System.out.println(problemCondition.keyword + " visible = " + problemCondition.isVisible + " type = " + problemCondition.type);
       Long count = problemService.count(problemCondition);
+      System.out.println(problemCondition.keyword + " visible = " + problemCondition.isVisible + " type = " + problemCondition.type);
       PageInfo pageInfo = buildPageInfo(count, problemCondition.currentPage,
           settings.RECORD_PER_PAGE, null);
 
       List<ProblemListDto> problemListDtoList = problemService
           .getProblemListDtoList(
               problemCondition, pageInfo);
-
       UserDto currentUser = (UserDto) session.getAttribute("currentUser");
+      System.out.println("count = " + count + " find = " + problemListDtoList.size());
       Map<Integer, ProblemSolveStatusType> problemStatus = getProblemStatus(currentUser, session);
 
       for (ProblemListDto problemListDto : problemListDtoList) {
